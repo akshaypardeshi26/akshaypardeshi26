@@ -4,11 +4,11 @@ side work and projects
 
 The side projects, work and tutorials I have been doing are pushed here.
 
-Diverse opics are covered.
+Diverse topics are covered.
 
-containing basics stuff like ,intro to matlab,LATEX.
+contains basics stuff like ,intro to matlab,LATEX.
 
-It will also have some advance OpenCV project work.
+It also has some advance OpenCV project work.
 
 Take a look at repo..hope it will be useful.
 
