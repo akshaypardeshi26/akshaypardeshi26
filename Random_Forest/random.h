@@ -13,7 +13,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
-#define trainSize 1700
 #define attributes 6
 //Structure for attributes of car
 /*
@@ -52,11 +51,20 @@
 #define label_acc     1
 #define label_good    2
 #define label_vgood   3
+#define totalLabels   4
 //Define buying attribute
 #define buying_vhigh   3
 #define buying_high    2
 #define buying_med     1
 #define buying_low     0
+//define person attributes
+#define person_two  0
+#define person_four 1
+#define person_more 2
+//Define luggage_boot
+#define lug_small  0
+#define lug_med  1
+#define lug_big 2
 //Define safety attribute
 #define safety_low  0
 #define safety_med  1
@@ -87,9 +95,9 @@ typedef struct car
 
 
 
-void read_data(car*,char [trainSize][10]);
+void read_data(car*,char [][10],int );
 //void stringToInt(char[trainSize][attributes],int[trainSize][attributes]);
-void stringToInt();
+void stringToInt(char* data[][attributes+1],int numData[][attributes+1]);
 //int getEntropy(char[trainSize][attributes],int label_idx,int);
 float getEntropy();
 //int* divideNode(int idx,int atrb_labels,int size);
