@@ -6,16 +6,18 @@
 //
 //
 
-#include "random.h"
+#include "rf.h"
+#include "stdlib.h"
+#include "time.h"
 int trainSize=1612;
 int testSize = 116;
 void printNode(node*);
 node** divideNode(node*,int);
 int numOfLabels[attributes];
 int testInput(node*t_node, int* in);
-void testFunction(node*t_node,int data[trainSize][attributes+1]);
+void testFunction(node**t_node,int data[trainSize][attributes+1]);
 void printDataInNode(node* t_node);
-void randomForest()
+void baseFunction()
 {
     char* data[trainSize][attributes+1];
     car* trainData;
@@ -31,12 +33,11 @@ void randomForest()
     numOfLabels[4]=3;
     numOfLabels[5]=3;
      //////////////////////////////
-    printf("Random Forest Implementation start:\n");
+   // printf("Random Forest Implementation start:\n");
     read_data(trainData,trainLabel,0);
-    printf("Data read successfully\n");
+   // printf("Data read successfully\n");
     for (int i=0; i<trainSize; i++)
     {
-        //printf("print %d ",i);
         for (int j=0; j<=attributes; j++)
         {
             data[i][j]=(char*)malloc(sizeof(char)*10);
@@ -53,7 +54,6 @@ void randomForest()
 
 
     }
-    //stringToInt(data,numData);
     stringToInt(data,numData);
   /* printf("Data Copied in to 2D array:\n");
     for (int i=0; i<trainSize; i++)
@@ -67,7 +67,10 @@ void randomForest()
         printf("      %d\n",i);
     }
     printf("data Printed\n");*/
-    node*root=createDecisionTree(numData);
+    node**root;
+    root = createRandomForest(numData);
+    printf("\nTraining data:\n");
+    printf("Training data testing is just for validation purpose.Can be commented out.\n");
     testFunction(root,numData);
     trainSize=testSize;
     //--------------------testing--------------------------
@@ -82,11 +85,9 @@ void randomForest()
     
     for (int i=0; i<testSize; i++)
     {
-    //printf("print %d ",i);
         for (int j=0; j<=attributes; j++)
         {
             testData[i][j]=(char*)malloc(sizeof(char)*10);
-            //numData[i][j]=(int*)malloc(sizeof(int));
             testNumData[i][j]=0;
         }
         strcpy(testData[i][0],testCar[i].buying);
@@ -99,10 +100,80 @@ void randomForest()
     }
 
     stringToInt(testData,testNumData);
+    printf("\nTesting data:\n");
     testFunction(root,testNumData);
 
 }
+//create Random forest
+node** createRandomForest(int numData[][attributes+1])
+{
+    time_t t;
+    int visit[attributes]={0};
 
+    int NumRandomSample=(int)(trainSize*2/3.0f);
+    int random_data[NumRandomSample][attributes+1];
+    int *selectedSample;
+    int *totalSelectedSample;
+    int smplNum;
+    node**root;
+    int cnt=0;
+    int tempSize=trainSize;
+    root=(node**)malloc(sizeof(node*)*TOTAL_TREES);
+    
+    selectedSample=(int*)malloc(sizeof(int)*trainSize);
+    totalSelectedSample=(int*)malloc(sizeof(int)*trainSize);
+    srand((unsigned) time(&t));
+    for (int itr=0; itr<TOTAL_TREES; itr++)
+    {
+        trainSize=tempSize;
+        //select attributes for each decision tree
+        for(int i=0;i<attributes;i++)
+        {
+            visit[i]=0;
+        }
+
+        visit[(rand())%attributes]=1;//generate some Random Number
+      //  visit[(rand())%attributes]=1;
+       // visit[(rand())%attributes]=1;
+        
+        //select samples for each decision tree
+        for (int i=0;i<trainSize; i++)
+        {
+            selectedSample[i]=0;
+            
+        }
+        cnt=0;
+
+        while (cnt<NumRandomSample)
+        {
+            smplNum=(rand()%trainSize);
+            if (selectedSample[smplNum]==0)
+            {
+                for(int j=0;j<attributes+1;j++)
+                {
+                    random_data[cnt][j] = numData[smplNum][j];
+                    
+                }
+                selectedSample[smplNum]=1;
+                totalSelectedSample[smplNum]=1;
+                cnt++;
+            }
+        }
+
+        trainSize=NumRandomSample;
+        root[itr]=createDecisionTree(random_data,visit);
+
+    }
+    trainSize=tempSize;
+    cnt=0;
+    for (int i=0;i<trainSize; i++)
+    {
+        if(totalSelectedSample[i]==0)
+            cnt++;
+    }
+    return root;
+
+}
 //read data from text file and store it into structured format
 void read_data(car*trainData,char trainLabel[trainSize][10],int test_flag)
 {
@@ -113,15 +184,14 @@ void read_data(car*trainData,char trainLabel[trainSize][10],int test_flag)
     
     //Read data in store it into train_label and trainData variables
     if(test_flag==1)
-        trainFD=fopen("test_car.txt","r+");
+        trainFD=fopen("small.data","r+");
     else
-        trainFD=fopen("train_car.txt","r+");
+        trainFD=fopen("train.data","r+");
     if(trainFD==NULL)
         printf("Error in reading File\n");
     while(!feof(trainFD))
     {
         fscanf(trainFD,"%s",temp);
-        //printf("%s\n",temp);
         token = strtok(temp, ",");
         strcpy(trainData[i].buying,token);
         /*while (token) {
@@ -158,7 +228,6 @@ void stringToInt(char* data[trainSize][attributes+1],int numData[trainSize][attr
     for (int i=0; i<trainSize; i++)
     {
         //DEFINE BUYING PRICE
-        //printf("%d ",numData[i][0]);
         if(!strcmp(data[i][BUYING],"vhigh"))
             numData[i][BUYING]=buying_vhigh;
         else if(!strcmp(data[i][BUYING],"high"))
@@ -167,9 +236,8 @@ void stringToInt(char* data[trainSize][attributes+1],int numData[trainSize][attr
             numData[i][BUYING]=buying_med;
         else
             numData[i][BUYING]=buying_low;
-        // printf("%d ",numData[i][0]);
+        
         //MAINT NEED
-        //printf("%d ",numData[i][0]);
         //as maint and buying labels are same reuse(vhigh,high,med,low)
         if(!strcmp(data[i][MAINT],"vhigh"))
             numData[i][MAINT]=buying_vhigh;
@@ -179,9 +247,7 @@ void stringToInt(char* data[trainSize][attributes+1],int numData[trainSize][attr
             numData[i][MAINT]=buying_med;
         else
             numData[i][MAINT]=buying_low;
-        // printf("%d ",numData[i][0]);
-        
-        //printf("%d ",numData[i][0]);
+       
         //as maint and buying labels are same reuse(vhigh,high,med,low)
         //NUMBER OF DOORS
         if(!strcmp(data[i][DOORS],"5more"))
@@ -228,9 +294,6 @@ void stringToInt(char* data[trainSize][attributes+1],int numData[trainSize][attr
         else
             numData[i][LABEL]=label_vgood;
     }
-    //for(int j=0;j<trainSize;j++)
-    //  printf("%d  ",numData[j][6]);
-    
     //printf("stringToInt done\n");
 }
 void printNode(node* t_node)
@@ -250,36 +313,27 @@ void printNode(node* t_node)
 
 
 
-
-
-
-
-
-
 //create Decision Tree
-node*createDecisionTree(int numData[][attributes+1])
+node*createDecisionTree(int numData[][attributes+1],int* visit)
 {
-    node*root = creatRootNode(numData);
+    node*root = creatRootNode(numData,visit);
     creatSubTree(root,1);
-    
     return root;
 
 }
 //creat root node for decision tree
-node*creatRootNode(int data[][attributes+1])
+node*creatRootNode(int data[][attributes+1],int* visit)
 {
     node *root;
-    
-    printf("create root node\n");
+    //printf("create root node\n");
     root = (node*)malloc(sizeof(node));
     root->columns = attributes+1;
     root->rows = trainSize;
     root->divAttribute=-1;
     root->ansLabel=0;
     root->divLabels=0;
-    
     for (int i=0;i<attributes;i++)
-        root->visitedAttrb[i]=0;
+        root->visitedAttrb[i]=visit[i];
     root->numdata = (int**)malloc(sizeof(int*)*root->rows);
     for (int i=0;i<root->rows;i++)
         root->numdata[i]=(int*)malloc(sizeof(int)*root->columns);
@@ -287,34 +341,32 @@ node*creatRootNode(int data[][attributes+1])
     for(int i=0;i<root->rows;i++)
         for(int j=0;j<root->columns;j++)
             root->numdata[i][j]=data[i][j];
-    printf("created root node\n");
+   // printf("created root node\n");
     return root;
-    
 }
 
 void creatSubTree(node* t_node,int level)
 {
     
-    printf("\ncreateSubTree: At level %d\n",level-1);
+   // printf("\ncreateSubTree: At level %d\n",level-1);
   //  printDataInNode(t_node);
     int isHomo=isHomogeneous(t_node);
     if(isHomo!=-1)
     {
-
         t_node->ansLabel=isHomo;
         t_node->divAttribute=-1;
-        printf("it is homogeneous Node %d %d\n",t_node->rows,t_node->ansLabel);
-        printNode(t_node);
+ //       printf("it is homogeneous Node %d %d\n",t_node->rows,t_node->ansLabel);
+      //  printNode(t_node);
         return;
     }
-    if (t_node->rows<5)
+    //pruning decision tree
+  /*  if (t_node->rows<5)
     {
         t_node->divAttribute=-1;
           return;
-    }
+    }*/
     node** child;
     int divLbl =  findDivNode(t_node);
-
     if (divLbl != -1)
     {
         t_node->divAttribute=divLbl;
@@ -323,7 +375,7 @@ void creatSubTree(node* t_node,int level)
         //printNode(t_node);
         for (int i=0;i< t_node->divLabels;i++ )
         {
-            printf("\nchild number :%d",i);
+           // printf("\nchild number :%d",i);
             if(child[i]->rows!=0)
             {
                 creatSubTree(child[i],level+1);
@@ -343,22 +395,18 @@ int findDivNode(node* t_node)
     // printf("Entered findDivNode \n");
     int flag=0,divLabel=-1;
     float ent=0,entC;
-    float gain,max_gain=-1000;
+    float gain,max_gain=-1000;//assign some min_value
     node**child;
     ent = getEntropy(t_node);
     //printf("Entropy of parent: %f\n",ent);
     for (int i=0;i<attributes; i++)
     {
-
         if(!(t_node->visitedAttrb[i]))
         {
-           
             entC=0;
             child = divideNode(t_node,i);
-           
             for (int j=0;j < t_node->divLabels ; j++)
             {
-           
                 entC += child[j]->rows*getEntropy(child[j])*1.0f/(t_node->rows);
                 //printf("Cumulative Entropy till Child %d is %f\n",j,entC);
                 freeMem(child[j]);
@@ -468,11 +516,8 @@ float getEntropy(node* t_node)
     }
     for(int i=0;i<4;i++)
     {
-//        if(arr[i]==0)
-  //          break;
         entropy+=arr[i]*1.0f/(size+0.000001)*log((arr[i]+0.00001)*1.0f/(size+0.000001))/log(2);
         //printf("arr[%d]=%d  cal=%f ent=%f\n",i,arr[i],arr[i]*1.0f/size*log((arr[i]+0.00001)*1.0f/size)/log(2),entropy);
-        
     }
     //printf("getEntropy Done\n");
     return (-entropy);
@@ -490,11 +535,9 @@ int isHomogeneous(node* t_node)
 
     for(int i=1;i<t_node->rows;i++)
     {
-    //    printf("data[%d] %d\n",i,t_node->numdata[i][attributes]);
         lblCnt[t_node->numdata[i][attributes]]++;
         if(t_node->numdata[i][attributes]!=val)
         {
-      //      printf("%d\n",i);
             flag=-1;
             //break;
         }
@@ -528,18 +571,40 @@ int testInput(node*t_node, int* in)
     
 }
 
-void testFunction(node*t_node,int indata[trainSize][attributes+1])
+void testFunction(node**t_node,int indata[trainSize][attributes+1])
 {
     int cnt=0;
+    int max;
+    int OutputCnt[totalLabels]={0};
     for(int i=0;i<trainSize;i++)
     {
-        if(testInput(t_node, indata[i])==indata[i][attributes])
+        for (int j=0; j<totalLabels; j++)
+            OutputCnt[j]=0;
+        for (int j=0; j<TOTAL_TREES; j++)
+        {
+            OutputCnt[testInput(t_node[j], indata[i])]++;
+            
+        }
+        max=0;
+        for(int j=0; j<totalLabels; j++)
+        {
+            //printf("%d ",OutputCnt[j]);
+            if (OutputCnt[j]>OutputCnt[max])
+            {
+               // printf("%d ",OutputCnt[j]);
+                max=j;
+            }
+        }
+        //if(max!=0)
+         //   printf("%d %d\n",max,indata[i][attributes]);
+       // printf("\ni=%d ,expected = %d result = %d\n",i,indata[i][attributes],max);
+        if(max==indata[i][attributes])
            cnt++;
         else
-            printf("i=%d ,expected = %d result = %d\n",i,indata[i][attributes],testInput(t_node, indata[i]));
+            printf("\nMissclassified: Sample Num=%d , predicted = %d  expected = %d",i,max,indata[i][attributes]);
     }
            float accu = cnt*100.0f/trainSize;
-           printf("\nAccuracy is: %f\n",accu);
+           printf("\n\nAccuracy is: %f\n",accu);
 }
 void printDataInNode(node* t_node)
 {

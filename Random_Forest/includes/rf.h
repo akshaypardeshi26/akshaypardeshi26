@@ -13,7 +13,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+//otal attributes in dataSet
 #define attributes 6
+//Number of trees formed for RandomForest
+#define TOTAL_TREES 5
+
 //Structure for attributes of car
 /*
  car labels
@@ -102,9 +106,10 @@ void stringToInt(char* data[][attributes+1],int numData[][attributes+1]);
 float getEntropy();
 //int* divideNode(int idx,int atrb_labels,int size);
 int findDivNode(node*);
-void randomForest();
-node*creatRootNode(int numData[][attributes+1]);
-node*createDecisionTree(int numData[][attributes+1]);
+void baseFunction();
+node*creatRootNode(int numData[][attributes+1],int*);
+node*createDecisionTree(int numData[][attributes+1],int*);
+node** createRandomForest(int numData[][attributes+1]);
 //free dynamically allocated memory
 void freeMem(node* t_node);
 //check if all results in given are are of same type

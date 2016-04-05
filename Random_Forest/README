@@ -1,0 +1,17 @@
+Instructions:
+
+Step 1: Compile
+
+> make compile
+
+Step 2: Running
+
+> make run-small
+> make run-medium
+> make run-large
+
+Dataset Sources:
+
+PCA Small: https://archive.ics.uci.edu/ml/datasets/Car+Evaluation
+PCA Medium: to be added 
+PCA Large: to be added

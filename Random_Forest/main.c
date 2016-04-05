@@ -7,11 +7,10 @@
 //
 
 #include <stdio.h>
-#include "random.h"
+#include "rf.h"
 
 int main(int argc, const char * argv[]) {
-    // insert code here...
-    printf("Hello, World!\n");
-    randomForest();
+    
+    baseFunction();
     return 0;
 }
